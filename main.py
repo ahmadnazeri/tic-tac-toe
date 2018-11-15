@@ -16,6 +16,8 @@ class Board:
 
 
     def move(self, row, column, piece):
+        """ Makes the move based on row and column and piece """
+
         if row < 0 or row >= self._dimension or column < 0 or column >= self._dimension or self._board[row][column] != ' ':
             print('Move cannot be made')
             return False
@@ -25,10 +27,14 @@ class Board:
 
 
     def check_move(self, row, column):
+        """ Determines if a move is possible """
+
         return self._board[row][column] == ' '
 
 
     def game_over(self):
+        """ Determines if game has finished """
+
         if self._number_of_moves == 9:
             return True
 
@@ -36,6 +42,8 @@ class Board:
 
 
     def winner_found(self):
+        """ Sees if there is a winner """
+
         first_row = self.find_three_in_row([self._board[0][0], self._board[0][1], self._board[0][2]])
         second_row = self.find_three_in_row([self._board[1][0], self._board[1][1], self._board[1][2]])
         third_row = self.find_three_in_row([self._board[2][0], self._board[2][1], self._board[2][2]])
@@ -54,6 +62,8 @@ class Board:
 
 
     def find_three_in_row(self, row):
+        """ Checks if a row has three in a row """
+
         if row[0] != ' ' and row[0] == row[1] and row[1] == row[2]:
             return True
         else:
@@ -61,6 +71,8 @@ class Board:
 
 
     def create_board(self, dimension):
+        """ Creates the board based on dimension """
+
         board = []
 
         for i in range(dimension):
@@ -72,18 +84,36 @@ class Board:
         return board
 
 
+    def get_empty_positions(self):
+        """ Returns all available moves """
+
+        empty_positions = []
+
+        for i in range(self._dimension):
+            for j in range(self._dimension):
+                if self._board[i][j] == ' ':
+                    empty_positions.append((i, j))
+
+        return empty_positions
+
+
     def get_piece(self, row, column):
+        """ Gets the piece in a given position """
         return self._board[row][column]
 
     def get_number_of_moves(self):
+        """ Returns the number of moves since the beginning of game """
         return self._number_of_moves
 
 
     def get_dimension(self):
+        """ Gets the Dimension of board """
         return self._dimension
 
 
     def print_board(self):
+        """ Displays the board """
+
         print('-----'*self._dimension)
         for row in range(len(self._board)):
             print(' | ', end='')
@@ -94,6 +124,8 @@ class Board:
 
 
 class Player:
+    """ Class Player for a Human"""
+
     def __init__(self, piece, opponents):
         self._piece = piece
         self._opponents = opponents
@@ -109,7 +141,11 @@ class Player:
 
 
 class RandomPlayer(Player):
+    """ Randommly makes moves """
+
     def move(self, board):
+        """ Determines a random move for the player """
+
         move = (randint(0, board.get_dimension()-1), randint(0, board.get_dimension()-1))
 
         while not board.check_move(move[0], move[1]):
@@ -120,11 +156,10 @@ class RandomPlayer(Player):
 
 
 class YellowJ(Player):
-    def move(self, board):        
-        # move = (randint(0, board.get_dimension()-1), randint(0, board.get_dimension()-1))
+    """ Class that gives player some intelligence """
 
-        # while not board.check_move(move[0], move[1]):
-        #     move = (randint(0, board.get_dimension()-1), randint(0, board.get_dimension()-1))
+    def move(self, board):
+        """ Determines the best move for the player """
 
         if board.get_number_of_moves() == 0:
             random_row = randint(0, 2)
@@ -175,15 +210,20 @@ class YellowJ(Player):
                 elif len(corner2_moves) > 0 and corner_pieces[3] != self._piece and corner_pieces[3] == center_piece and corner_pieces[0] == self._piece:
                     move = corner2_moves[0]
                 else:
-                    move = (randint(0, board.get_dimension()-1), randint(0, board.get_dimension()-1))
+                    move = self.can_complete_two_in_row(board)
 
-                    while not board.check_move(move[0], move[1]):
+                    if move == (-1, -1):
                         move = (randint(0, board.get_dimension()-1), randint(0, board.get_dimension()-1))
+
+                        while not board.check_move(move[0], move[1]):
+                            move = (randint(0, board.get_dimension()-1), randint(0, board.get_dimension()-1))
 
         return move
 
 
     def check_for_winner(self, board):
+        """ Determines if there is a move that will win the game for the player or opponent """
+
         potential_move = (-1, -1)
 
         # Find Potential Three in a Row for Rows
@@ -242,15 +282,17 @@ class YellowJ(Player):
 
         second_diagonal = [(2, 0), (1, 1), (0, 2)]
         second_diagonal_index = self.can_complete_three_in_row(second_diagonal, board)
+
         if second_diagonal_index[0] >= 0:
             return second_diagonal[second_diagonal_index[0]]
         elif second_diagonal_index[1] >= 0:
             potential_move = second_diagonal[second_diagonal_index[1]]
 
-
         return potential_move
 
     def can_complete_three_in_row(self, row_positions, board):
+        """ Checks if there can be three in a row for a given position """
+
         row = [board.get_piece(row_positions[0][0], row_positions[0][1]), board.get_piece(row_positions[1][0], row_positions[1][1]), board.get_piece(row_positions[2][0], row_positions[2][1])]
 
         if row.count(' ') == 1 and row.count(self._piece) == 2:
@@ -266,8 +308,18 @@ class YellowJ(Player):
         
         return (self_winner, opponent_winner)
 
+    # TODO: find a way to detect potential two in a two in a row
+    def can_complete_two_in_row(self, board):
+        """ Used to determine if two in a row can be made for two rows """
+
+        row1 = [(0, 0), (0, 1), (0, 2)]
+        row2 = [(1, 0), (1, 1), (0, 2)]
+
+        return (-1, -1)
 
     def remove_filled_positions(self, positions, board):
+        """ Removes positions that are already taken """
+
         new_positions = []
         for p in positions:
             if board.check_move(p[0], p[1]):
@@ -277,6 +329,7 @@ class YellowJ(Player):
 
 
 def computer_vs_computer(number_of_games, print_board=False):
+    """ Run X number of games where computer plays against itself """
     games_won = 0
     games_lost = 0
     games_tied = 0
@@ -319,6 +372,24 @@ def computer_vs_computer(number_of_games, print_board=False):
     print('%d - Games Tied' % (games_tied))
 
 
+def human_vs_computer():
+    """ Create a game for Human vs Computer """
+    
+    board, players = setup_game()
+    board.print_board()
+
+    while not board.game_over():
+        player_to_move = players[board.get_number_of_moves()%2]
+        move = player_to_move.move(board)
+
+        board.move(int(move[0]), int(move[1]), player_to_move.get_piece())
+        board.print_board()
+
+    if board.game_over() and board.winner_found():
+        print('Game Ended with \'%s\' Player Winning' % (player_to_move.get_piece()))
+    else:
+        print('Game Ended in a Draw.')
+
 # TODO: Modify to allow more than 2 Players
 # TODO: Modify to allow use of boards larger than 3x3
 def setup_game():
@@ -335,20 +406,6 @@ def setup_game():
     return board, players
 
 
-def human_vs_computer():
-    board, players = setup_game()
-    board.print_board()
-
-    while not board.game_over():
-        player_to_move = players[board.get_number_of_moves()%2]
-        move = player_to_move.move(board)
-
-        board.move(int(move[0]), int(move[1]), player_to_move.get_piece())
-        board.print_board()
-
-    if board.game_over() and board.winner_found():
-        print('Game Ended with \'%s\' Player Winning' % (player_to_move.get_piece()))
-
 if __name__ == '__main__':
     human_vs_computer()
-    # computer_vs_computer(100000, False)
+    # computer_vs_computer(1000000, False)
